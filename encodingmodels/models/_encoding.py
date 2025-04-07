@@ -489,7 +489,7 @@ class EncodingModel(object):
 		recursive_add_filetype(self.result_paths)
 		weights = self.save_location / 'weights.npz'
 	
-		if (self.save_pred and not self.result_paths['pred'].exists()) and all([v.exists() for v in self.result_paths['test_story_pred'].values]) and weights.exists():
+		if (self.save_pred and not self.result_paths['pred'].exists()) and all([v.exists() for v in self.result_paths['test_story_pred'].values()]) and weights.exists():
 			print('WARNING: previous weights found, but we are discarding and recomputing them to get the predicted response!!!')
 	
 		# If ridge parameters have alreadby been found, don't do
