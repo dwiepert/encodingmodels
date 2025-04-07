@@ -2,3 +2,5 @@
 *.pyc
 .vscode/launch.json
 /test
+runs.txt
+save_times.py
