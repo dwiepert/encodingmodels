@@ -526,7 +526,7 @@ class EncodingModel(object):
 			valphas = self.cci.download_raw_array(self.result_paths['valphas'])
 			return self.run_regression(prev_valphas=valphas)
 	
-	def _save_local(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim):
+	def _save_local(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred):
 		results = {}
 		results['weights'] = wt
 		if self.save_weights:
@@ -552,7 +552,7 @@ class EncodingModel(object):
 		print('r2: %f' % np.nansum(corrs * np.abs(corrs)))
 		return results
 	
-	def _save_cci(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim):
+	def _save_cci(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred):
 		results = {}
 		base_path = self.save_location
 		results['weights'] = wt
@@ -665,9 +665,9 @@ class EncodingModel(object):
 				use_corr=self.use_corr, solver_dtype=np.float32)
 
 		if self.cci is None:
-			results = self._save_local(wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim)
+			results = self._save_local(wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred)
 		else:
-			results = self._save_cci(wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim)
+			results = self._save_cci(wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred)
 
 		# Evaluate on individual test stories.
 		if len(self.Pstories) > 1:
