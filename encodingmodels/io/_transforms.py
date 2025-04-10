@@ -43,7 +43,7 @@ class ProcessPCA():
         self.r = evec
         print(self.r.shape)
     
-    def _call__(self, sample):
+    def __call__(self, sample):
         vector = sample['features']
         rotated = np.matmul(vector, self.r)
         print(rotated.shape)
