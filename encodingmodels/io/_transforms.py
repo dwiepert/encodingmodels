@@ -45,7 +45,6 @@ class ProcessPCA():
     def __call__(self, sample):
         vector = sample['features']
         rotated = np.matmul(vector, self.r)
-        print(rotated.shape)
         sample['features'] = rotated
         return sample
 
