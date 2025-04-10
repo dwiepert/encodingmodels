@@ -31,6 +31,25 @@ class ProcessEMA():
             norm_ema[:,j] = 2 * np.divide((jcol - np.min(jcol)), (np.max(jcol)-np.min(jcol)))
         sample['features'] = norm_ema
         return sample
+
+class ProcessPCA():
+    """
+    PCA processing transform
+    """
+    def __init__(self, pcs:int=13):
+        self.pcs = pcs
+        rand_matrix = np.random.random((self.pcs,self.pcs))
+        eval, evec = np.linalg.eig(rand_matrix)
+        self.r = evec
+        print(self.r.shape)
+    
+    def _call__(self, sample):
+        vector = sample['features']
+        rotated = np.matmul(vector, self.r)
+        print(rotated.shape)
+        sample['features'] = rotated
+        return sample
+
     
 class Downsample():
     """

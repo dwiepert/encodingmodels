@@ -24,7 +24,7 @@ class FeatureDataset(Dataset):
     :param recursive: bool, boolean for whether to load features recursively (default = False)
     :param cci_features: cc interface (default = None)
     """
-    def __init__(self, feature_type:str, feature_dir:Union[str,Path], recursive:bool=False, cci_features=None, pre_transform:bool=True):
+    def __init__(self, feature_type:str, feature_dir:Union[str,Path], recursive:bool=False, cci_features=None, pre_transform:bool=True, **kwargs):
         super().__init__()
         self.feature_type=feature_type
         self.root_dir = feature_dir
@@ -36,6 +36,8 @@ class FeatureDataset(Dataset):
         self.transformed = False
         if self.feature_type=='ema':
             self.tf_list = [ProcessEMA()]
+        elif 'pca' in self.feature_type:
+            self.tf_list = [ProcessPCA(pcs=kwargs['pcs'])]
         else:
             self.tf_list = []
 

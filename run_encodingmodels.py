@@ -30,6 +30,7 @@ if __name__ == "__main__":
                          help='Specify the path to features')
     parser.add_argument('--feature_type',type=str, required=True,
                          help='Specify the type of feature')
+    parser.add_argument('--pcs', type=int, default=argparse.SUPPRESS)
     parser.add_argument('--save_dir', type=Path, default=None,
                         help="Specify a local directory to save configuration files to. If not saving features to corral, this also specifies local directory to save files to.")
     parser.add_argument('--config', type=Path, help='Load arguments from a JSON file instead of setting them via command line')
@@ -90,7 +91,8 @@ if __name__ == "__main__":
         args_dict['save_dir'].mkdir(parents=True, exist_ok=True)
 
     ## FEATURE DATASET KWARGS
-    featdb_kwargs = {k: v for k, v in args_dict.items() if k in ['feature_dir','feature_type', 'recursive']}
+    featdb_kwargs = {k: v for k, v in args_dict.items() if k in ['feature_dir','feature_type', 'recursive', 'pcs']}
+    if 'pca' in featdb_kwargs['feature_type']: assert 'pcs' in featdb_kwargs
         
     if args_dict['feat_bucket'] is not None:
         cci_features = cc.get_interface(args_dict['feat_bucket'], verbose=False)
