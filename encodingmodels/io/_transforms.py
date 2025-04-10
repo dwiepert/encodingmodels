@@ -41,7 +41,6 @@ class ProcessPCA():
         rand_matrix = np.random.random((self.pcs,self.pcs))
         eval, evec = np.linalg.eig(rand_matrix)
         self.r = evec
-        print(self.r.shape)
     
     def __call__(self, sample):
         vector = sample['features']
