@@ -1,3 +1,8 @@
+"""
+Helper functions
+
+from https://github.com/HuthLab/encoding-models
+"""
 import functools 
 import warnings
 from pathlib import Path

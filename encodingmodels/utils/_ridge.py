@@ -1,18 +1,25 @@
-#import scipy
-import multiprocessing
-import numpy as np
-import logging
-from database_utils.functions import mult_diag, zscore_encoding
-import random
+"""
+Ridge functions 
+from https://github.com/HuthLab/encoding-models
+"""
+#IMPORTS
+##built-in
 import itertools as itools
+import logging
+import multiprocessing
+import random
 import socket
 
+##third-party
+import numpy as np
 import torch
 if not socket.gethostname().startswith('login'):
     # Don't multithread on login nodes (stalls session b/c too many threads)
     torch.set_num_threads(multiprocessing.cpu_count())
-
 from tqdm import tqdm
+
+##local
+from database_utils.functions import mult_diag, zscore_encoding
 
 # TODO: use zscore from ridge_utils.util
 zs =zscore_encoding #lambda v: (v-v.mean(0))/v.std(0) ## z-score function

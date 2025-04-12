@@ -1,16 +1,15 @@
 """
 Encoding Model class
 
-Author(s): Aditya Vaidya, Daniela Wiepert
-Last modified: 02/15/2025
+Author(s): Alex Huth, Aditya Vaidya, Daniela Wiepert
+Last modified: 04/11/2025
 """
 #IMPORTS
 ##built-in
-import functools
-import os
 import json
+import os
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict, Tuple
 import warnings 
 
 ##third-party
@@ -23,7 +22,16 @@ with warnings.catch_warnings():
 from encodingmodels.utils import *
 from database_utils.functions import *
 
-def get_save_location(subject, feature_type, nuisance=None, chunk_sz: float = 0.010, context_sz: float = 64.0):
+def get_save_location(subject:str, feature_type:str, nuisance=None, chunk_sz:float = 0.1, context_sz:float = 8.0) -> str:
+	"""
+	Create a str for the save location 
+
+	:param subject: str, indicates subject scans are from
+	:param feature_type: str, indicates which features the model is being fit with
+	:param nuisance: 
+	:param chunk_sz: float, chunk size features were extracted with
+	:param context_sz: float, context size features were extracted with
+	"""
 	# These are obsolete parameters, but are still in the object paths, so we
 	# should keep them until we move to a different object store namespace.
 	num_sel_frames = 1
@@ -37,12 +45,16 @@ def get_save_location(subject, feature_type, nuisance=None, chunk_sz: float = 0.
 	return os.path.join("subjects", f"{subject}{nuisance_suffix}",
 					f"cnk{chunk_sz:0.1f}_ctx{context_sz:0.1f}_pick_{num_sel_frames}_skip{frame_skip}_{feature_type}")
 
-def config_equals(config_a, config_b) -> bool:
+def config_equals(config_a:dict, config_b:dict) -> bool:
 	"""
 	Check if two configurations are equal. This function is needed because
 	configs may be missing entries, but those entries should have assumed defaults.
 
 	`config_a` and `config_b` are dicts.
+
+	:param config_a: dict, configuration a
+	:param config_b: dict, configuration b
+	:return: boolean indicating whether the configurations are the same
 
 	TODO: make a EncodingModelConfiguration class that has a custom comparator.
 	"""
@@ -148,14 +160,48 @@ def config_equals(config_a, config_b) -> bool:
 
 class EncodingModel(object):
 	"""
-	TODO
+	Encoding model class
+
+	:param subject: str, fMRI scan subject
+	:param out_bucket: str/None, name of s3 bucket where outputs can be saved
+	:param feats: dict, dictionary of features mapping string story name to the loaded numpy array
+	:param feature_type: str, name of feature
+	:param Rstories: str list, list of training stories
+	:param Pstories: str list, list of test stories
+	:param sessions: str list, list of session numbers to get fMRI responses from (as strings)
+	:param save_dir: str/Path, optional local save path
+	:param trim: int, Trim downsampled stimulus matrix. (default = 5)
+	:param extra_trim: int, Extra trim applied to downsampled stimulus matrix to account
+						for words at the beginning of the story with insufficient
+						context length in neural LMs. (default = 15)
+	:param ndelays: int, List of delays to model the hemodynamic response function. (default=4)
+	:param nboots: int, number of iterations (default=10)
+	:param singcutoff: Remove singluar values <= this number in SVD for efficiency (default=1e-10)
+	:param chunklen: int, Length of TR chunk held out for validation. (default=40)
+	:param nchunks: int, Number of TR chunks held out for validation in each bootstrap. (default=125)
+	:param chunk_sz: float, feature chunk (from feature extraction) in seconds (default = 0.1)
+	:param context_sz: float, context size used for feature extraction in seconds (default = 8.0)
+	:param use_corr: bool, If True, use correlation as the metric of model fit.
+					   Else, use variance explained (R-squared). (default = False)
+	:param single_alpha: bool, Whether to use a single alpha for all responses. Good for identification/decoding. (default = False)
+	:param save_weights: bool, save out model weights (default = True)
+	:param alphas_logspace: list or array_like, shape (A,)
+        Ridge parameters that will be tested. Should probably be log-spaced. np.logspace(0, 3, 20) works well. (default = (1,4,10))
+	:param nuisance: None
+	:param overwrite:bool, whether to overwrite saved files when running (default = False)
+	:param save_crossval: bool, save out cross validation results (default = True)
+	:param save_pred: bool, save out model predictions (default = True)
+	:param delays: list of delays
+	:param ignore_dialogue: bool, ignore some specific stories (default = False)
+	:param scaling_story_splits: bool, gnore some specific stories, and add more stories to test set (default = False)
+	:param Pstory_trim:int, trim number of Pstories (default=0)
 	"""
 	def __init__(
-			self, subject, out_bucket, feats:dict, feature_type:str, Rstories: List[str],
-			Pstories: List[str], sessions:List[str], save_dir:Union[Path,str]=None,
-			trim=5, extra_trim=15, ndelays=4, nboots=10, singcutoff=1e-10,
-			chunklen=40, nchunks=125, chunk_sz: float = 0.010, context_sz:float=64.0, 
-			use_corr=False, single_alpha=False, save_weights=True,
+			self, subject:str, out_bucket:str, feats:Dict[str, np.ndarray], feature_type:str, 
+			sessions:List[str], Rstories: List[str]=None, Pstories: List[str]=None,save_dir:Union[Path,str]=None,
+			trim:int=5, extra_trim:int=15, ndelays:int=4, nboots=10, singcutoff=1e-10,
+			chunklen:int=40, nchunks:int=125, chunk_sz: float = 0.1, context_sz:float=8.0, 
+			use_corr:bool=False, single_alpha:bool=False, save_weights:bool=True,
 			alphas_logspace=(1,4,10), nuisance=None, overwrite: bool = False, save_crossval=True,
 			save_pred=True, delays: Optional[List[int]] = None, ignore_dialogue: bool = False,
 			scaling_story_splits: bool = False, Pstory_trim: int = 0):
@@ -173,6 +219,8 @@ class EncodingModel(object):
 
 		self.Rstories = Rstories
 		self.Pstories = Pstories
+		if self.Rstories or self.Pstories is None:
+			all_stories, self.Rstories, self.Pstories = get_stories_in_sessions(self.sessions, 'stimulidb')
 		self.feature_type = feature_type
 		# Let a different function handle the different cases for selecting
 		# stories.
@@ -241,9 +289,19 @@ class EncodingModel(object):
 	@classmethod
 	def get_config_stories(cls, sessions: List[str]=[], Rstories: List[str]=[],
 						Pstories: List[str]=[], ignore_dialogue: bool=False,
-						scaling_story_splits: bool=False):
+						scaling_story_splits: bool=False) -> Tuple[List, List, List, List]:
 		"""
 		Return the Rstories and Pstories used for the given config
+
+		:param sessions: str list, list of session numbers to get fMRI responses from (as strings) (default = [])
+		:param Rstories: str list, list of training stories (default = [])
+		:param Pstories: str list, list of test stories (default = [])
+		:param ignore_dialogue: bool, ignore some specific stories (default = False)
+		:param scaling_story_splits: bool, gnore some specific stories, and add more stories to test set (default = False)
+		:return sessions: str list, list of session numbers to get fMRI responses from (as strings)
+		:return allstories: str list, list of all stories
+		:return Rstories: str list, list of training stories
+		:return Pstories: str list, list of test stories 
 		"""
 
 		allstories = list(set(Rstories + Pstories))
@@ -279,10 +337,11 @@ class EncodingModel(object):
 
 		return sessions, allstories, Rstories, Pstories
 
-	def _prepend_save_location(self, dict_or_str):
+	def _prepend_save_location(self, dict_or_str:Union[Dict[str, str], str]) -> Union[Dict[str,str], str]:
 		""" Use this function to recursively prepend the save location to
 		everything in the results dictionary.
-		TODO 
+		:param dict_or_str: dict containing values that need to have save location prepended to them OR the value that needs to be edited
+		:return: dict with prepended strings or str with the save location prepended to it
 		"""
 		if isinstance(dict_or_str, str):
 			if isinstance(self.save_location, Path):
@@ -293,7 +352,7 @@ class EncodingModel(object):
 
 	def initialize_config(self):
 		"""
-		TODO
+		Initialize the config with input parameters
 		"""
 		
 		save_location = get_save_location(self.subject, self.feature_type, nuisance=self.nuisance,
@@ -363,7 +422,11 @@ class EncodingModel(object):
 		self.set_config_vars(self.config)
 		return
 
-	def set_config_vars(self, config):
+	def set_config_vars(self, config:dict):
+		"""
+		Set all the configuration variables
+		:param config: dictionary with all arguments as keys and variable values as values
+		"""
 		self.sessions = config['sessions']
 		if ('Rstories' in config) or ('Pstories' in config):
 			self.Rstories = config['Rstories']
@@ -391,22 +454,12 @@ class EncodingModel(object):
 		self.Pstory_trim = config['Pstory_trim']
 		return
 
-	def apply_zscore_and_hrf(self, stories, is_Pstories=False):
+	def apply_zscore_and_hrf(self, stories:List[str], is_Pstories:bool=False) -> np.ndarray:
 		"""Get (z-scored and delayed) stimulus for train and test stories.
 
-		Args:
-			stories: List of stimuli stories.
-
-		Variables:
-			downsampled_feat (dict): Downsampled feature vectors for all stories.
-			trim: Trim downsampled stimulus matrix.
-			extra_trim: Extra trim applied to downsampled stimulus matrix to account
-						for words at the beginning of the story with insufficient
-						context length in neural LMs.
-			delays: List of delays to model the hemodynamic response function.
-
-		Returns:
-			delstim: <float32>[TRs, features * ndelays]
+		:param stories: str List of stimuli stories.
+		:param is_Pstories: bool, True is applying to test stories (default = False)
+		:return delstim: <float32>[TRs, features * ndelays]
 		"""
 		start_tr, end_tr = self.start_tr, self.end_tr
 		if is_Pstories: start_tr += self.Pstory_trim
@@ -417,28 +470,14 @@ class EncodingModel(object):
 		delstim = make_delayed(stim, delays)
 		return delstim
 
-	def preprocess_stimulus(self, features: np.array, do_zscore: bool=True, do_trim=True):
-		"""Apply the necessary preprocessing for the given downsampled stimulus features.
-
-		In this case, it (optionally) truncates, then (optionally) z-scores,
-		and finally adds delays.
+	def get_response(self, stories:List[str], is_Pstories:bool=False) -> np.ndarray:
 		"""
-		if do_trim:
-			tr_slice = slice(self.start_tr, self.end_tr)
-		else:
-			tr_slice = slice(None) # equivalent to [:]
+		Get the subject's fMRI response for stories.
 
-		if do_zscore:
-			stim = zscore(features[tr_slice, :])
-		else:
-			stim = features[tr_slice, :] # TODO: does this copy? avoid if so
-
-		delays = self.delays
-		delstim = make_delayed(stim, delays)
-		return delstim
-
-	def get_response(self, stories, try_cached=True, is_Pstories=False):
-		"""Get the subject's fMRI response for stories."""
+		:param stories: str List of stimuli stories.
+		:param is_Pstories: bool, True if working with test stories
+		:return: fMRI response as a numpy array
+		"""
 		resp = []
 		start_trim_trs = self.extra_trim
 		if is_Pstories:
@@ -466,7 +505,15 @@ class EncodingModel(object):
 				resp.extend(cci_resp.download_raw_array(resp_path)[start_trim_trs:])
 		return np.array(resp)
 
-	def get_prediction_corrs(self, delayed_stim, weights, response, corrs_path, story_name):
+	def get_prediction_corrs(self, delayed_stim:np.ndarray, weights:np.ndarray, response:np.ndarray, story_name:str) -> None:
+		"""
+		Get correlations for predicitions
+
+		:param delayed_stim: numpy array of delayed stimulus features for test set
+		:param weights: numpy array of model weights
+		:param response: numpy array of fMRI response for test set
+		:param story_name: str of the story we are getting predictions for
+		"""
 		#prediction = np.dot(delayed_stim.astype(delayed_stim), weights)
 		prediction = delayed_stim.astype(weights.dtype) @ weights
 		corrs = np.zeros((response.shape[1],), dtype=prediction.dtype)
@@ -485,7 +532,12 @@ class EncodingModel(object):
 				self.cci.upload_raw_array(self.result_paths['test_story_pred'][story_name], prediction)
 		return
 	
-	def _check_valphas_local(self, prev_valphas):
+	def _check_valphas_local(self, prev_valphas:np.ndarray):
+		"""
+		Recursive check for previous valphas when working with local directories. If they exist, it calls the regression again with prev_valphas set.
+
+		:param prev_valphas: numpy array of previous valphas, shape (M,)
+		"""
 		recursive_add_filetype(self.result_paths)
 		weights = self.save_location / 'weights.npz'
 	
@@ -506,7 +558,12 @@ class EncodingModel(object):
 			valphas = np.load(self.result_paths['valphas'])
 			return self.run_regression(prev_valphas=valphas)
 
-	def _check_valphas_cci(self, prev_valphas):
+	def _check_valphas_cci(self, prev_valphas:np.ndarray):
+		"""
+		Recursive check for previous valphas when working with s3. If they exist, it calls the regression again with prev_valphas set.
+
+		:param prev_valphas: numpy array of previous valphas, shape (M,)
+		"""
 		# can't use result_paths['weights'] here because it might not be set
 		if (self.save_pred and not (self.cci.exists_object(self.result_paths['pred']) and \
 			all(map(self.cci.exists_object, self.result_paths['test_story_pred'])))) and \
@@ -526,7 +583,23 @@ class EncodingModel(object):
 			valphas = self.cci.download_raw_array(self.result_paths['valphas'])
 			return self.run_regression(prev_valphas=valphas)
 	
-	def _save_local(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred):
+	def _save_local(self, wt:np.ndarray, corrs:np.ndarray, valphas:np.ndarray, prev_valphas:np.ndarray, 
+				          bscorrs:np.ndarray, valinds:list, delPstim:np.ndarray, pred:np.ndarray) -> Dict[str, np.ndarray]:
+		"""
+		Save results to local directory
+
+		:param wt: numpy array of model weights, shape (N,M)
+		:param corrs: numpy array of correlations, shape (M,)
+		:param valphas: numpy array of current learned valphas, shape (M,)
+		:param prev_valphas: numpy array of previous valphas, shape (M,)
+		:param bscorrs: shape (A, M, B)
+        Correlation between predicted and actual responses on randomly held out portions of the training set,
+        for each of A alphas, M voxels, and B bootstrap samples.
+		:param valinds: The indices of the training data that were used as "validation" for each bootstrap sample, shape (TH, B)
+		:param delPstim: numpy array of delayed test stimulus features 
+		:param pred: numpy array of predicted fMRI response
+		:return results: dictionary of results
+		"""
 		results = {}
 		results['weights'] = wt
 		if self.save_weights:
@@ -552,7 +625,23 @@ class EncodingModel(object):
 		print('r2: %f' % np.nansum(corrs * np.abs(corrs)))
 		return results
 	
-	def _save_cci(self, wt, corrs, valphas, prev_valphas, bscorrs, valinds, delPstim, pred):
+	def _save_cci(self, wt:np.ndarray, corrs:np.ndarray, valphas:np.ndarray, prev_valphas:np.ndarray, 
+				          bscorrs:np.ndarray, valinds:list, delPstim:np.ndarray, pred:np.ndarray) -> Dict[str, np.ndarray]:
+		"""
+		Save results to s3 bucket
+
+		:param wt: numpy array of model weights, shape (N,M)
+		:param corrs: numpy array of correlations, shape (M,)
+		:param valphas: numpy array of current learned valphas, shape (M,)
+		:param prev_valphas: numpy array of previous valphas, shape (M,)
+		:param bscorrs: shape (A, M, B)
+        Correlation between predicted and actual responses on randomly held out portions of the training set,
+        for each of A alphas, M voxels, and B bootstrap samples.
+		:param valinds: The indices of the training data that were used as "validation" for each bootstrap sample, shape (TH, B)
+		:param delPstim: numpy array of delayed test stimulus features 
+		:param pred: numpy array of predicted fMRI response
+		:return results: dictionary of results
+		"""
 		results = {}
 		base_path = self.save_location
 		results['weights'] = wt
@@ -583,31 +672,12 @@ class EncodingModel(object):
 
 		return results
 			
-	def run_regression(self, prev_valphas=None):
-		"""Run ridge regression for given stimulus and response matrices.
-
-		Variables:
-			cci: Cottoncandy bucket interface.
-			base_path: Base path where encoding results are stored on corral.
-			nboots: Number of validation bootstraps.
-			alphas: Ridge penalties to try for regression.
-			chunklen: Length of TR chunk held out for validation.
-			nchunks: Number of TR chunks held out for validation in each bootstrap.
-			singcutoff: Remove singluar values <= this number in SVD for efficiency.
-			use_corr : If True, use correlation as the metric of model fit.
-					   Else, use variance explained (R-squared).
-			downsampled_feat (dict): Downsampled feature vectors for all stories.
-			trim: Trim downsampled stimulus matrix.
-			extra_trim: Extra trim applied to downsampled stimulus matrix to account
-						for words at the beginning of the story with insufficient
-						context length in neural LMs.
-			delays: List of delays to model the hemodynamic response function.
-
-		NOTE: Some variable descriptions are adapted from the original ridge regression
-		code written by Alex Huth! (git repo: speechmodeltutorial)
+	def run_regression(self, prev_valphas:np.ndarray=None):
 		"""
-		# TODO(shailee): Add more detail/fix variables' description.
-
+		Run ridge regression for given stimulus and response matrices.
+		:param prev_valphas: numpy array of previous valphas, shape (M,)
+		:return results: dictionary of results
+		"""
 		if self.cci is None:
 			self._check_valphas_local(prev_valphas)
 		else:
@@ -676,8 +746,7 @@ class EncodingModel(object):
 				# NOTE: we're NOT doing Pstory_trim here. This was originally a
 				# bug. But will probably be kept for compatibility.
 				zPresp = self.get_response([story])
-				corrs_path = os.path.join(self.save_location, 'corrs_%s'%story)
-				self.get_prediction_corrs(delPstim, wt, zPresp, corrs_path, story_name=story)
+				self.get_prediction_corrs(delPstim, wt, zPresp, story_name=story)
 
 		return results
 

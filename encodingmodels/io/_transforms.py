@@ -3,7 +3,7 @@ Potential transforms for encoding models
 """
 #IMPORT
 ##built-in
-from typing import Dict
+from typing import Dict,List
 ##third-party
 import numpy as np
 ##local
@@ -34,7 +34,9 @@ class ProcessEMA():
 
 class ProcessPCA():
     """
-    PCA processing transform
+    PCA processing transform for fitting encoding models with PCA features
+
+    :param pcs: int, number of principle components in the PCA features that are being procesed
     """
     def __init__(self, pcs:int=13):
         self.pcs = pcs
@@ -42,7 +44,12 @@ class ProcessPCA():
         eval, evec = np.linalg.eig(rand_matrix)
         self.r = evec
     
-    def __call__(self, sample):
+    def __call__(self, sample:Dict[str,np.ndarray]) -> Dict[str,np.ndarray]:
+        """
+        Transform sample
+        :param sample: dict, sample
+        :return sample: dict, transformed sample
+        """
         vector = sample['features']
         rotated = np.matmul(vector, self.r)
         sample['features'] = rotated
@@ -51,13 +58,22 @@ class ProcessPCA():
     
 class Downsample():
     """
+    Downsample features with lanczosinterp2D
+
+    :param allstories: list, list of all story names
+    :param window: int, windows for interpolation
     """
-    def __init__(self, allstories, window:int=3):
+    def __init__(self, allstories:List, window:int=3):
         self.allstories = allstories
         self.window = window
         self.wordseqs = get_story_wordseqs(self.allstories)
     
-    def __call__(self, sample):
+    def __call__(self, sample:Dict[str,np.ndarray]) -> Dict[str,np.ndarray]:
+        """
+        Transform sample
+        :param sample: dict, sample
+        :return sample: dict, transformed sample
+        """
         story = sample['story']
         vector = sample['features']
         times = sample['times']

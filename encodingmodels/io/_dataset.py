@@ -1,14 +1,13 @@
-#TODO: create a feature dataset compatible with ALL features
 """
 Feature dataset
 
 Author(s): Daniela Wiepert
-Last modified: 02/15/2025
+Last modified: 04/11/2025
 """
 #IMPORTS
 ##built-in
-from typing import Union,Dict,List
 from pathlib import Path
+from typing import Union,Dict,List
 ##third party
 import numpy as np
 from torch.utils.data import Dataset
@@ -20,9 +19,12 @@ from ._transforms import *
 class FeatureDataset(Dataset):
     """
     Custom feature dataset
-    :param root_dir: str/Path, root directory with feature files
+    :param feature_type: str, name of feature for documentation purposes
+    :param feature_dir: str/Path, root directory with feature files
     :param recursive: bool, boolean for whether to load features recursively (default = False)
     :param cci_features: cc interface (default = None)
+    :param pre_transform: bool, indicate whether to run and transform all features in advance (otherwise transform done when each feature called)
+    :param kwargs: additional arguments. Currently only 'pcs' is an argument of interest that is used when loading a pca-based feature set
     """
     def __init__(self, feature_type:str, feature_dir:Union[str,Path], recursive:bool=False, cci_features=None, pre_transform:bool=True, **kwargs):
         super().__init__()
@@ -103,7 +105,7 @@ class FeatureDataset(Dataset):
     
     def get_story_dict(self, stories) -> Dict[str, np.ndarray]:
         """
-        Get features
+        Get features for specific stories (still in dicitonary form)
 
         :return self.features: feature dictionary
         """

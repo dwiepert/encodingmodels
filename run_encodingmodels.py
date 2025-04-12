@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="cottoncandy")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature_dir',type=Path, required=True,
+    parser.add_argument('--feature_dir',type=Path,
                          help='Specify the path to features')
     parser.add_argument('--feature_type',type=str, required=True,
                          help='Specify the type of feature')
@@ -35,7 +35,7 @@ if __name__ == "__main__":
                         help="Specify a local directory to save configuration files to. If not saving features to corral, this also specifies local directory to save files to.")
     parser.add_argument('--config', type=Path, help='Load arguments from a JSON file instead of setting them via command line')
     parser.add_argument("--recursive", action="store_true", help='Recursively find .wav,.flac,.npz files in the feature and stimulus dirs')
-    parser.add_argument("--sessions", nargs="+", default=None)
+    parser.add_argument("--sessions", nargs="+", required=True)
     parser.add_argument("--Rstories", nargs="+", default=None)
     parser.add_argument("--Pstories", nargs="+", default=None)
     parser.add_argument("--Pstories_trim", type=int, default=argparse.SUPPRESS)
@@ -72,7 +72,6 @@ if __name__ == "__main__":
                         help='ignore some specific stories')
     model_args.add_argument('--scaling_story_splits', action='store_true',
                         help='ignore some specific stories, and add more stories to test set')
-    model_args.add_argument('-j', '--jobs', type=int, help="Number of threads to use for CPU-bound torch ops. NOTE: does NOT apply to numpy! (use env)")
     args = parser.parse_args()
     
     ##LOAD FROM CONFIG IF EXISTS
