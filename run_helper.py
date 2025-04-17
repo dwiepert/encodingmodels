@@ -6,6 +6,9 @@ root = '/mnt/data/dwiepert/data/features/features_cnk0.1_ctx8.0_pick1_skip5/'
 feat_dirs = {'wavlm-large': 'hf/wavlm-large/layer.8', 'ema':'sparc/en', 'lstsq':'lstsq_ema_to_wavlm-large.8', 'pca-lstsq':'pca_lstsq_to_lstsq', 'pca-wav':'pca_wavlm-large.8_to_wavlm-large.8', 'sfa-ema':'emaae_ema_to_sfa-ema'}
 save_dir = '/mnt/data/dwiepert/data/corrected_encodingmodels'
 
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir, exist_ok=True)
+    
 for s in subjects:
     for ft in feat_dirs:
         fd = os.path.join(root, feat_dirs[ft])
