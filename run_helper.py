@@ -8,7 +8,7 @@ save_dir = '/mnt/data/dwiepert/data/corrected_encodingmodels'
 
 for s in subjects:
     for ft in feat_dirs:
-        fd = os.path.join(root, feat_dirs[fd])
+        fd = os.path.join(root, feat_dirs[ft])
         args = ['python3', 'run_encodingmodels.py', f'--subject={s}', f'--feature_dir={fd}', f'--feature_type={ft}', '--save_dir=/mnt/data/dwiepert/data/corrected_encodingmodels',
             '--sessions', '1', '2', '3', '4', '5' '--nboots=10', '--save_weights', '--save_pred', '--save_crossval' ]
 
