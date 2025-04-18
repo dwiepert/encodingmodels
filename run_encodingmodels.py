@@ -114,8 +114,6 @@ if __name__ == "__main__":
 
     ## ENCODING MODEL KWARGS
     encmodel_kwargs = {k: v for k, v in args_dict.items() if k not in ['feature_dir', 'recursive', 'feat_bucket', 'stim_bucket', 'jobs', 'config', 'pcs']}
-    if args_dict['jobs'] is not None:
-        torch.set_num_threads(args_dict['jobs'])
 
     nchunks = encmodel_kwargs['nchunks']
     if str_is_type(nchunks, int):
