@@ -11,10 +11,13 @@ if not os.path.exists(save_dir):
 
 for s in subjects:
     for ft in feat_dirs:
+        print(f'Running {s}:{ft} ... ')
         fd = os.path.join(root, feat_dirs[ft])
         args = ['python3', 'run_encodingmodels.py', f'--subject={s}', f'--feature_dir={fd}', f'--feature_type={ft}', '--save_dir=/mnt/data/dwiepert/data/corrected_encodingmodels',
             '--sessions', '1', '2', '3', '4', '5', '--nboots=10', '--save_weights', '--save_pred', '--save_crossval' ]
 
+        if 'pca' in ft:
+            args.append('--pcs=13')
         save_output = os.path.join(save_dir, f'output_{s}_{ft}.txt')
 
         with open(save_output, 'w') as outfile:
