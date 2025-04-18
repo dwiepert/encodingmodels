@@ -19,3 +19,5 @@ for s in subjects:
 
         with open(save_output, 'w') as outfile:
             subprocess.run(args, stdout=outfile, stderr=subprocess.STDOUT)
+        
+        print(f'Finished {s}:{ft}')
