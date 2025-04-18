@@ -8,12 +8,12 @@ save_dir = '/mnt/data/dwiepert/data/corrected_encodingmodels'
 
 if not os.path.exists(save_dir):
     os.makedirs(save_dir, exist_ok=True)
-    
+
 for s in subjects:
     for ft in feat_dirs:
         fd = os.path.join(root, feat_dirs[ft])
         args = ['python3', 'run_encodingmodels.py', f'--subject={s}', f'--feature_dir={fd}', f'--feature_type={ft}', '--save_dir=/mnt/data/dwiepert/data/corrected_encodingmodels',
-            '--sessions', '1', '2', '3', '4', '5' '--nboots=10', '--save_weights', '--save_pred', '--save_crossval' ]
+            '--sessions', '1', '2', '3', '4', '5', '--nboots=10', '--save_weights', '--save_pred', '--save_crossval' ]
 
         save_output = os.path.join(save_dir, f'output_{s}_{ft}.txt')
 
