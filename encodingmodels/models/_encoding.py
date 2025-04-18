@@ -209,6 +209,7 @@ class EncodingModel(object):
 		self.subject = subject
 		self.bucket= out_bucket
 		self.downsampled_feat = feats
+		self.sessions = sessions
 
 		if (self.bucket == '') or (self.bucket is None):
 			self.cci = None

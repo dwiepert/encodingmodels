@@ -104,6 +104,7 @@ if __name__ == "__main__":
 
     
     ## DETERMINE RSTORIES AND PSTORIES
+    print(args.sessions)
     if args.sessions is None:
         assert (args_dict['Rstories'] is not None) or (args_dict['Pstories']) is not None
     else:
@@ -111,6 +112,8 @@ if __name__ == "__main__":
         all_stories, train_stories, test_stories = get_stories_in_sessions(args.sessions, args.stim_bucket)
         args_dict['Rstories'] = train_stories
         args_dict['Pstories'] = test_stories
+        print(train_stories)
+        print(test_stories)
 
     ## ENCODING MODEL KWARGS
     encmodel_kwargs = {k: v for k, v in args_dict.items() if k not in ['feature_dir', 'recursive', 'feat_bucket', 'stim_bucket', 'jobs', 'config', 'pcs']}
