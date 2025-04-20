@@ -23,7 +23,7 @@ class FeatureDataset(Dataset):
     :param feature_dir: str/Path, root directory with feature files
     :param recursive: bool, boolean for whether to load features recursively (default = False)
     :param cci_features: cc interface (default = None)
-    :param pre_transform: bool, indicate whether to run and transform all features in advance (otherwise transform done when each feature called)
+    :param pre_transform: bool, indicate whether to run and transform all features in advance (otherwise transform done when each feature called) (default=True)
     :param kwargs: additional arguments. Currently only 'pcs' is an argument of interest that is used when loading a pca-based feature set
     """
     def __init__(self, feature_type:str, feature_dir:Union[str,Path], recursive:bool=False, cci_features=None, pre_transform:bool=True, **kwargs):
@@ -103,20 +103,22 @@ class FeatureDataset(Dataset):
         """
         return self.features
     
-    def get_story_dict(self, stories) -> Dict[str, np.ndarray]:
+    def get_story_dict(self, stories:List[str]) -> Dict[str, np.ndarray]:
         """
         Get features for specific stories (still in dicitonary form)
-
-        :return self.features: feature dictionary
+`       :param stories: List of stories
+        :return storyd: feature dictionary
         """
         storyd = {}
         for s in stories:
             storyd[s] = self.features[s]
         return storyd
     
-    def get_stacked_features(self, stories) -> np.ndarray:
+    def get_stacked_features(self, stories:List[str]) -> np.ndarray:
         """
         Get stacked features based off a list of stories
+        :param stories: List of stories
+        :return stacked: numpy array of stacked features
         """
         to_stack = []
         for s in stories:

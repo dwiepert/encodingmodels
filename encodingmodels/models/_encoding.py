@@ -166,9 +166,9 @@ class EncodingModel(object):
 	:param out_bucket: str/None, name of s3 bucket where outputs can be saved
 	:param feats: dict, dictionary of features mapping string story name to the loaded numpy array
 	:param feature_type: str, name of feature
+	:param sessions: str list, list of session numbers to get fMRI responses from (as strings)
 	:param Rstories: str list, list of training stories
 	:param Pstories: str list, list of test stories
-	:param sessions: str list, list of session numbers to get fMRI responses from (as strings)
 	:param save_dir: str/Path, optional local save path
 	:param trim: int, Trim downsampled stimulus matrix. (default = 5)
 	:param extra_trim: int, Extra trim applied to downsampled stimulus matrix to account

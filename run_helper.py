@@ -1,3 +1,4 @@
+#RUN MULTIPLE
 import subprocess
 import os
 

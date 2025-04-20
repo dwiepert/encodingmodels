@@ -61,7 +61,7 @@ class Downsample():
     Downsample features with lanczosinterp2D
 
     :param allstories: list, list of all story names
-    :param window: int, windows for interpolation
+    :param window: int, windows for interpolation (default = 3)
     """
     def __init__(self, allstories:List, window:int=3):
         self.allstories = allstories
@@ -77,7 +77,7 @@ class Downsample():
         story = sample['story']
         vector = sample['features']
         times = sample['times']
-        #midpoint of the final 25ms window 
+        #Needs to be end time
         #after interpolation, plot time course related to the original uninterpolated feature
         #plot like in the speech model tutorial
         downsampled_vector = lanczosinterp2D(vector, times[:,1],
